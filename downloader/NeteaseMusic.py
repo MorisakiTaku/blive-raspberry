@@ -1,35 +1,37 @@
-from util.Request import Request
-from util.AES import AESCipher
+from util.Config import Config
+from util.AES import NeteaseEncryptor
+import requests
 import json
 import time
 
 class NeteaseMusic(object):
 
     def __init__(self):
-        self.config = {
-            'nonce': '0CoJUm6Qyw8W8jud',
-            'secretKey': 'TA3YiYCfY2dDJQgg',
-            'encSecKey': '84ca47bca10bad09a6b04c5c927ef077d9b9f1e37098aa3eac6ea70eb59df0aa28b691b7e75e4f1f9831754919ea784c8f74fbfadf2898b0be17849fd656060162857830e241aba44991601f137624094c114ea8d17bce815b0cd4e5b8e2fbaba978c6d1d14dc3d1faf852bdd28818031ccdaaa13a6018e1024e2aae98844210',
-            'IV': '0102030405060708'
+        all_config = Config()
+        self.headers = {
+            'User-Agent': all_config.get(key='User-Agent', module='headers'),
+            'Cookie':     all_config.get(key='Cookie',     module='headers')
         }
 
-    # aes-128-cbc
-    def aesEncode(self, data, key):
-        return AESCipher(key=key).encrypt(data, self.config['IV'])
-    
-    # 预处理Post数据
     def prepare(self, data):
-        result = { 'params': self.aesEncode(json.dumps(data), self.config['nonce']) }
-        result['params'] = self.aesEncode(result['params'], self.config['secretKey'])
-        result['encSecKey'] = self.config['encSecKey']
-        return result
+        """将post数据转换为网易云的密文"""
+        str_ = json.dumps(data)
+        encrypt = NeteaseEncryptor(str_)
+        return encrypt.get_data()
 
-    # 搜索歌曲
     def search(self, keyword, singer=None):
-        response = Request.jsonGet(url='http://s.music.163.com/search/get/', params={
-            'type': 1,
-            's': keyword
-        })
+        """按歌曲名和歌手搜索歌曲"""
+        response = requests.post(
+            url = 'https://music.163.com/weapi/cloudsearch/get/web?csrf_token=',
+            data = self.prepare({
+                "s": keyword,
+                "type": "1",
+                "limit": "30",
+                "csrf_token": ""
+            }),
+            headers = self.headers
+        )
+        # 解析response
         if 'code' in response and response['code'] == 200:
             result = []
             # 遍历歌曲
@@ -37,7 +39,7 @@ class NeteaseMusic(object):
                 # 遍历歌手
                 song['singer'] = ''
                 isSelect = True
-                for artist in song['artists']:
+                for artist in song['ar']:
                     if singer and artist['name'] == singer:
                         song['singer'] = singer
                         isSelect = True
@@ -49,27 +51,29 @@ class NeteaseMusic(object):
                 if isSelect:
                     song['singer'] = song['singer'].strip()
                     result.append(song)
-
             return result
         else:
             return []
-    
-    # 搜索歌曲 取第一首
+
     def searchSingle(self, keyword, singer=None):
+        """取搜索结果的第一首"""
         result = self.search(keyword, singer)
         if result:
             return result[0]
         else:
             return None
 
-    # 批量获取歌曲链接
     def getUrl(self, songIds):
-        response = Request.jsonPost(url='http://music.163.com/weapi/song/enhance/player/url?csrf_token=', params=self.prepare({
-            'ids': songIds,
-            'br': 999000,
-            'csrf_token': ''
-        }))
-
+        """批量获取歌曲的下载链接"""
+        response = requests.post(
+            url = 'https://music.163.com/weapi/song/enhance/player/url?csrf_token=',
+            data = self.prepare({
+                'ids': [songIds],
+                'br': 999000,
+                'csrf_token': ''
+            }),
+            headers = self.headers
+        ).json()
         # 解析response
         if 'code' in response and response['code'] == 200:
             if 'data' in response:
@@ -78,10 +82,10 @@ class NeteaseMusic(object):
                 return []
         else:
             return None
-    
-    # 获取单一歌曲链接
+
     def getSingleUrl(self, songId):
-        result = self.getUrl([songId])
+        """取下载链接的第一条"""
+        result = self.getUrl(songId)
         if result == None:
             return result
         elif len(result) == 0:
@@ -89,29 +93,33 @@ class NeteaseMusic(object):
         else:
             return result[0]
 
-    # 通过歌曲id下载歌曲
     def download(self, songId, filename=None, callback=None):
-        # 名称处理
+        """根据id下载歌曲"""
+        # 取时间戳作为歌曲临时文件名
         if not filename:
             filename = str(int(time.time()))
-
         # 获取歌曲并下载
         musicResult = self.getSingleUrl(songId)
         if musicResult and 'url' in musicResult:
             musicUrl = musicResult['url']
             filename = './downloader/download/%s.mp3' % filename
-            Request.download(musicUrl, filename, callback)
-
+            response = requests.get(musicUrl, headers=self.headers, timeout=600).content
+            with open(filename, 'wb') as mp3:
+                mp3.write(response)
             return filename
         else:
             return False
 
-    # 通过ID获取歌曲信息
     def getInfo(self, id):
-        response = Request.jsonPost(url='http://music.163.com/weapi/v3/song/detail?csrf_token=', params=self.prepare({
-            'c': json.dumps([{ 'id': id }]),
-            'csrf_token': ''
-        }))
+        """通过ID获取歌曲信息"""
+        response = requests.post(
+            url = 'http://music.163.com/weapi/v3/song/detail?csrf_token=',
+            data = self.prepare({
+                'c': json.dumps([{ 'id': id }]),
+                'csrf_token': ''
+            }),
+            headers = self.headers
+        )
         if 'code' in response and response['code'] == 200:
             if 'songs' in response and response['songs']:
                 song = response['songs'][0]
@@ -126,29 +134,31 @@ class NeteaseMusic(object):
         else:
             return False
 
-    # 获取歌词
     def getLyric(self, songId):
-        response = Request.jsonPost(url='http://music.163.com/weapi/song/lyric?csrf_token=', params=self.prepare({
-            'id': songId,
-            'os': 'pc',
-            'lv': -1,
-            'kv': -1,
-            'tv': -1,
-            'csrf_token': ''
-        }))
-
+        """获取歌词"""
+        response = requests.post(
+            url = 'https://music.163.com/weapi/song/lyric?csrf_token=',
+            data = self.prepare({
+                'id': songId,
+                'os': 'pc',
+                'lv': -1,
+                'kv': -1,
+                'tv': -1,
+                'csrf_token': ''
+            }),
+            headers = self.headers
+        )
         if 'code' in response and response['code'] == 200:
             result = {
                 'lyric': '',
                 'tlyric': ''
             }
-            # 获取歌词
+            # 获取原歌词
             if 'lrc' in response and 'lyric' in response['lrc']:
                 result['lyric'] = response['lrc']['lyric']
             else:
                 return False
-
-            # 获取翻译歌词
+            # 获取歌词翻译
             if 'tlyric' in response and 'lyric' in response['tlyric']:
                 result['tlyric'] = response['tlyric']['lyric']
 

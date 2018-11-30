@@ -1,5 +1,6 @@
 import urllib
 import urllib.request
+import requests
 import json
 import socket
 
@@ -15,7 +16,7 @@ class Request(object):
                 url += '?' + paramStr
             else:
                 url += url + paramStr
-        
+
         # 发送请求
         request = urllib.request.Request(url=url, headers=header, method='GET')
         if not header:
@@ -23,7 +24,7 @@ class Request(object):
 
         response = json.loads(urllib.request.urlopen(request).read().decode('utf-8'))
         return response
-    
+
     @staticmethod
     def jsonPost(url, params={}, header={}):
         # 判断是否需要转换
@@ -41,9 +42,12 @@ class Request(object):
 
         response = json.loads(urllib.request.urlopen(request).read().decode('utf-8'))
         return response
-    
+
     @staticmethod
-    def download(url, savePath, callback=None):
+    def download(url, savePath, callback=None, header={}):
         # 设置下载超时时间
         socket.setdefaulttimeout(600)
-        urllib.request.urlretrieve(url, savePath, callback)
+        response = requests.get(url, headers=header).content
+        print('download start')
+        with open(savePath, 'wb') as mp3:
+            mp3.write(response)

@@ -22,7 +22,7 @@ Style: right_up,微软雅黑,20,&H00FFFFFF,&H00FFFFFF,&H28533B3B,&H500E0A00,0,0,
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-Dialogue: 2,0:00:00.00,7:00:00.00,right_down,,0,0,0,,基于树莓派3B
-Dialogue: 2,0:00:00.00,7:00:00.00,left_up,,0,0,0,,树莓派点播台~\N已开源，源码见https://github.com/smilecc/blive-raspberry
-Dialogue: 2,0:00:00.00,7:00:00.00,right_up,,0,0,0,,点歌请发送弹幕 点歌歌曲名-歌手\N例如 点歌热河-李志
+Dialogue: 2,0:00:00.00,7:00:00.00,right_down,,0,0,0,,基于树莓派2B
+Dialogue: 2,0:00:00.00,7:00:00.00,left_up,,0,0,0,,树莓派点播台
+Dialogue: 2,0:00:00.00,7:00:00.00,right_up,,0,0,0,,点歌请发送弹幕\N【点歌 歌曲名-歌手】或【点歌 歌曲id】
 Dialogue: 0,7:00:00.00,7:00:02.00,right_up,,0,0,0,,

@@ -1,5 +1,5 @@
 from util.Config import Config
-from util.AES import NeteaseEncryptor
+from NeteaseEncryptor import NeteaseEncryptor
 import requests
 import json
 import time
@@ -55,7 +55,7 @@ class NeteaseMusic(object):
         else:
             return []
 
-    def searchSingle(self, keyword, singer=None):
+    def search_single(self, keyword, singer=None):
         """取搜索结果的第一首"""
         result = self.search(keyword, singer)
         if result:
@@ -63,7 +63,7 @@ class NeteaseMusic(object):
         else:
             return None
 
-    def getUrl(self, songIds):
+    def get_url(self, songIds):
         """批量获取歌曲的下载链接"""
         response = requests.post(
             url = 'https://music.163.com/weapi/song/enhance/player/url?csrf_token=',
@@ -83,9 +83,9 @@ class NeteaseMusic(object):
         else:
             return None
 
-    def getSingleUrl(self, songId):
+    def get_single_url(self, songId):
         """取下载链接的第一条"""
-        result = self.getUrl(songId)
+        result = self.get_url(songId)
         if result == None:
             return result
         elif len(result) == 0:
@@ -99,7 +99,7 @@ class NeteaseMusic(object):
         if not filename:
             filename = str(int(time.time()))
         # 获取歌曲并下载
-        musicResult = self.getSingleUrl(songId)
+        musicResult = self.get_single_url(songId)
         if musicResult and 'url' in musicResult:
             musicUrl = musicResult['url']
             filename = './downloader/download/%s.mp3' % filename
@@ -110,7 +110,7 @@ class NeteaseMusic(object):
         else:
             return False
 
-    def getInfo(self, id):
+    def get_info(self, id):
         """通过ID获取歌曲信息"""
         response = requests.post(
             url = 'http://music.163.com/weapi/v3/song/detail?csrf_token=',
@@ -134,7 +134,7 @@ class NeteaseMusic(object):
         else:
             return False
 
-    def getLyric(self, songId):
+    def get_lyric(self, songId):
         """获取歌词"""
         response = requests.post(
             url = 'https://music.163.com/weapi/song/lyric?csrf_token=',

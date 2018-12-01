@@ -8,3 +8,7 @@ NormalTest.py
 NeteaseTest.py
 config.json
 config.json
+sample/searchResponse
+sample/urlResponse
+sample/lyricResponse
+danmuSTest.py

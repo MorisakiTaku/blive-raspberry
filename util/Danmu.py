@@ -1,4 +1,5 @@
 from util.Config import Config
+import requests
 import urllib
 import urllib.request
 import json
@@ -7,97 +8,93 @@ import time
 class Danmu(object):
     def __init__(self):
         self.config = Config()
-        self.httpConfig = {
+        self.http_config = {
             'getUrl': 'http://api.live.bilibili.com/ajax/msg',
             'sendUrl': 'http://api.live.bilibili.com/msg/send',
             'header': {
-                "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                "Accept-Encoding":"utf-8",
-                "Accept-Language":"zh-cn,zh;q=0.8,en-us;q=0.5,en;q=0.3",
-                "Connection":"keep-alive",
-                "Cookie": self.config.get('cookie'),
-                "Host":"api.live.bilibili.com",
-                "Referer":"http://live.bilibili.com/" + self.config.get('roomId'),
-                "User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:32.0) Gecko/20100101 Firefox/32.0"
+                "Accept": "application/json, text/javascript, */*; q=0.01",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Accept-Language": "zh,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh-CN;q=0.6",
+                "Cookie": self.config.get('cookie', 'danmu'),
+                "Host": "api.live.bilibili.com",
+                "Referer": "http://live.bilibili.com/" + self.config.get('roomId'),
+                "User-Agent": self.config.get('User-Agent', 'headers')
             }
         }
-        self.sendLock = False
+        self.send_lock = False
 
     def get(self):
-        # 准备数据
-        roomId = self.config.get('roomId')
-        postData = urllib.parse.urlencode({	'token:': '', 'csrf_token:': '', 'roomid': roomId }).encode('utf-8')
-
-        # 发送请求
-        request = urllib.request.Request(self.httpConfig['getUrl'], postData, self.httpConfig['header'])
-        response = json.loads(urllib.request.urlopen(request).read().decode('utf-8'))
-
+        """获取弹幕（单次上限10条）"""
+        room_id = self.config.get('roomId')
+        post_data = {'token:': '', 'csrf_token:': '', 'roomid': room_id}
+        response = requests.post(
+            url = self.http_config['getUrl'],
+            data = post_data,
+            headers = self.http_config['header']
+        ).json()
         # 获取最后的弹幕时间
-        configTimestamp = self.config.get(module='danmu', key='timestamp')
-        if configTimestamp == None:
-            configTimestamp = 0
-        else:
-            configTimestamp = float(configTimestamp)
+        config_time = self.config.get(module='danmu', key='timestamp')
+        config_time = float(config_time) if config_time else 0
 
         if 'code' in response and response['code'] == 0:
             # 解析弹幕
             result = []
             for danmu in response['data']['room']:
-
                 # 判断弹幕是否被处理过
-                thisTimestamp = time.mktime(time.strptime(danmu['timeline'], "%Y-%m-%d %H:%M:%S"))
-                if configTimestamp >= thisTimestamp:
+                current_time = time.mktime(time.strptime(danmu['timeline'], "%Y-%m-%d %H:%M:%S"))
+                if config_time >= current_time:
                     continue
-                
-                self.config.set(module='danmu', key='timestamp', value=thisTimestamp)
-                
+
+                self.config.set(module='danmu', key='timestamp', value=current_time)
                 result.append({
                     'name': danmu['nickname'],
                     'time': danmu['timeline'],
                     'uid': str(danmu['uid']),
                     'text': danmu['text']
                 })
-                pass
             return result
         else:
             raise Exception('Cookie 无效')
 
     def send(self, text):
-        elapsedTime = 0
-        while self.sendLock:
+        """发送弹幕"""
+        elapsed_time = 0
+        while self.send_lock:
             time.sleep(1)
             # 判断等待超时
-            elapsedTime += 1
-            if (elapsedTime > 30):
+            elapsed_time += 1
+            if (elapsed_time > 30):
                 return None
-        
-        # 判断长度
-        lengthLimit = 20
-        if len(text) > lengthLimit:
-            for i in range(0, len(text), lengthLimit):
-                self.send(text[i:i + lengthLimit])
+
+        # 将超过20字的弹幕切片后发送
+        length_limit = 20
+        if len(text) > length_limit:
+            for i in range(0, len(text), length_limit):
+                self.send(text[i:i + length_limit])
                 time.sleep(1.5)
             return True
-        
+
         # 准备数据
-        self.sendLock = True
+        self.send_lock = True
         try:
-            roomId = self.config.get('roomId')
-            postData = (urllib.parse.urlencode({
-                            'color': '16777215',
-                            'fontsize': '25',
-                            'mode': '1',
-                            'msg': text,
-                            'rnd': '1512718534',
-                            'roomid': roomId
-                        }).encode('utf-8'))
-
+            room_id = self.config.get('roomId')
+            post_data = {
+                'color': '16777215',
+                'csrf_token': self.config.get("csrf_token", 'danmu'),
+                'fontsize': '25',
+                'mode': '1',
+                'msg': text,
+                'rnd': '1543573073',
+                'roomid': room_id
+            }
             # 发送请求
-            request = urllib.request.Request(self.httpConfig['sendUrl'], postData, self.httpConfig['header'])
-            response = json.loads(urllib.request.urlopen(request).read().decode('utf-8'))
-
+            response = requests.post(
+                url = self.http_config['sendUrl'],
+                data = post_data,
+                headers = self.http_config['header']
+            ).json()
             return 'code' in response and response['code'] == 0
         except Exception as e:
             raise e
         finally:
-            self.sendLock = False
+            self.send_lock = False

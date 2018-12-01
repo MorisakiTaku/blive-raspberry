@@ -1,5 +1,5 @@
+from downloader.NeteaseEncryptor import NeteaseEncryptor
 from util.Config import Config
-from NeteaseEncryptor import NeteaseEncryptor
 import requests
 import json
 import time
@@ -30,7 +30,7 @@ class NeteaseMusic(object):
                 "csrf_token": ""
             }),
             headers = self.headers
-        )
+        ).json()
         # 解析response
         if 'code' in response and response['code'] == 200:
             result = []
@@ -63,12 +63,12 @@ class NeteaseMusic(object):
         else:
             return None
 
-    def get_url(self, songIds):
+    def get_url(self, song_ids):
         """批量获取歌曲的下载链接"""
         response = requests.post(
             url = 'https://music.163.com/weapi/song/enhance/player/url?csrf_token=',
             data = self.prepare({
-                'ids': [songIds],
+                'ids': [song_ids],
                 'br': 999000,
                 'csrf_token': ''
             }),
@@ -83,9 +83,9 @@ class NeteaseMusic(object):
         else:
             return None
 
-    def get_single_url(self, songId):
+    def get_single_url(self, song_id):
         """取下载链接的第一条"""
-        result = self.get_url(songId)
+        result = self.get_url(song_id)
         if result == None:
             return result
         elif len(result) == 0:
@@ -93,13 +93,13 @@ class NeteaseMusic(object):
         else:
             return result[0]
 
-    def download(self, songId, filename=None, callback=None):
+    def download(self, song_id, filename=None, callback=None):
         """根据id下载歌曲"""
         # 取时间戳作为歌曲临时文件名
         if not filename:
             filename = str(int(time.time()))
         # 获取歌曲并下载
-        musicResult = self.get_single_url(songId)
+        musicResult = self.get_single_url(song_id)
         if musicResult and 'url' in musicResult:
             musicUrl = musicResult['url']
             filename = './downloader/download/%s.mp3' % filename
@@ -110,36 +110,32 @@ class NeteaseMusic(object):
         else:
             return False
 
-    def get_info(self, id):
+    def get_info(self, song_id):
         """通过ID获取歌曲信息"""
         response = requests.post(
-            url = 'http://music.163.com/weapi/v3/song/detail?csrf_token=',
+            url = 'https://music.163.com/weapi/v3/song/detail?csrf_token=',
             data = self.prepare({
-                'c': json.dumps([{ 'id': id }]),
+                'c': json.dumps([{'id': song_id }]),
                 'csrf_token': ''
             }),
             headers = self.headers
-        )
+        ).json()
+        print(response)
         if 'code' in response and response['code'] == 200:
             if 'songs' in response and response['songs']:
                 song = response['songs'][0]
-                return {
-                    'id': song['id'],
-                    'name': song['name'],
-                    'singer': song['ar'][0]['name']
-                }
-                pass
+                return song
             else:
                 return False
         else:
             return False
 
-    def get_lyric(self, songId):
+    def get_lyric(self, song_id):
         """获取歌词"""
         response = requests.post(
             url = 'https://music.163.com/weapi/song/lyric?csrf_token=',
             data = self.prepare({
-                'id': songId,
+                'id': song_id,
                 'os': 'pc',
                 'lv': -1,
                 'kv': -1,
@@ -147,7 +143,7 @@ class NeteaseMusic(object):
                 'csrf_token': ''
             }),
             headers = self.headers
-        )
+        ).json()
         if 'code' in response and response['code'] == 200:
             result = {
                 'lyric': '',

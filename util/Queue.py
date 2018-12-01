@@ -7,7 +7,7 @@ class DownloadQueue:
     @staticmethod
     def put(item, block=True, timeout=None):
         return DownloadQueue.QueueInstance.put(item, block=True, timeout=None)
-    
+
     @staticmethod
     def get(block=True, timeout=None):
         return DownloadQueue.QueueInstance.get(block, timeout)
@@ -23,7 +23,7 @@ class PlayQueue:
     @staticmethod
     def put(item, block=True, timeout=None):
         return PlayQueue.QueueInstance.put(item, block=True, timeout=None)
-    
+
     @staticmethod
     def get(block=True, timeout=None):
         return PlayQueue.QueueInstance.get(block, timeout)

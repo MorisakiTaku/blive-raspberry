@@ -2,9 +2,9 @@ from downloader.NeteaseMusic import *
 
 from service.Service import Service
 from util.Danmu import Danmu
-##from util.Log import Log
+from util.Log import Log
 
-##from util.Queue import DownloadQueue
+from util.Queue import DownloadQueue
 import time
 
 class DanmuService(Service):
@@ -61,12 +61,12 @@ class _Operation(object):
             song = self._order_song_name(danmu)
 
         if song:
-            self.danmu.send('%s点歌成功' % song['name'])
+            self.danmu.send('%s 点歌成功' % song['name'])
             DownloadQueue.put({
                     'type': 'music',
                     'id': song['id'],
                     'name': song['name'],
-                    'singer': song['singer'],
+                    'singer': song['ar'][0]['name'],
                     'username': danmu['name']
             })
         else:

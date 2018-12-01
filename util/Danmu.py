@@ -15,6 +15,7 @@ class Danmu(object):
                 "Accept": "application/json, text/javascript, */*; q=0.01",
                 "Accept-Encoding": "gzip, deflate, br",
                 "Accept-Language": "zh,en-US;q=0.9,en;q=0.8,zh-TW;q=0.7,zh-CN;q=0.6",
+                "Connection": "keep-alive",
                 "Cookie": self.config.get('cookie', 'danmu'),
                 "Host": "api.live.bilibili.com",
                 "Referer": "http://live.bilibili.com/" + self.config.get('roomId'),

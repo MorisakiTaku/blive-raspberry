@@ -10,7 +10,7 @@ from util.FFmpeg import *
 from util.Log import Log
 
 class MediaService(Service):
-    
+
     def __init__(self):
         self.danmu = Danmu()
         self.log = Log('Media Service')
@@ -23,7 +23,7 @@ class MediaService(Service):
                 # 获取随机文件，播放
                 musicPath = './resource/music/'
                 randomMusic = self.getRandomFile(musicPath)
-                
+
                 musicName = os.path.basename(randomMusic)
                 musicName = musicName.replace(os.path.splitext(randomMusic)[1], '')
 
@@ -44,14 +44,14 @@ class MediaService(Service):
 
         except Exception as e:
             self.log.error(e)
-    
+
     # 播放音乐
     def playMusic(self, music, autoPlay=False):
         imagePath = './resource/img/'
         randomImage = imagePath + self.getRandomFile(imagePath)
         self.log.info('[Music] 开始播放[%s]点播的[%s]' % (music['username'], music['name']))
-        self.danmu.send('正在播放%s' % music['name'])
-        
+        self.danmu.send('正在播放 %s' % music['name'])
+
         # 获取歌词
         assPath = './resource/lrc/default.ass'
         if 'lrc' in music:
@@ -63,7 +63,7 @@ class MediaService(Service):
         self.log.debug(command)
         process = subprocess.Popen(args=command, cwd=os.getcwd(), shell=True)
         process.wait()
-        
+
         # 播放完毕
         if not autoPlay:
             os.remove(path=music['filename'])

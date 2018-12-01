@@ -120,7 +120,6 @@ class NeteaseMusic(object):
             }),
             headers = self.headers
         ).json()
-        print(response)
         if 'code' in response and response['code'] == 200:
             if 'songs' in response and response['songs']:
                 song = response['songs'][0]

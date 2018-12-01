@@ -1,11 +1,16 @@
 {
     "rtmp": {
-        "url": "rtmp://txy.live-send.acg.tv/live-txy/",
+        "url": "rtmp://js.live-send.acg.tv/live-js/",
         "code": ""
     },
-    "cookie": "",
-    "danmu": {
-        "timestamp": 1512720376.0
+    "headers": {
+    	"User-Agent": "",
+    	"Cookie": ""
     },
-    "roomId": 35724
+    "danmu": {
+    	"cookie": "",
+        "timestamp": 1512720376.0,
+        "csrf_token": ""
+    },
+    "roomId": 0
 }

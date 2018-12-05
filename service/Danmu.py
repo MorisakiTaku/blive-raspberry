@@ -21,7 +21,7 @@ class DanmuService(Service):
     def run(self):
         try:
             self.parse_danmu()
-            time.sleep(1.5)
+            time.sleep(10)
         except Exception as e:
             self.log.error(e)
 

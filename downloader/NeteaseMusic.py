@@ -69,7 +69,7 @@ class NeteaseMusic(object):
             url = 'https://music.163.com/weapi/song/enhance/player/url?csrf_token=',
             data = self.prepare({
                 'ids': [song_ids],
-                'br': 999000,
+                'br': 192000,
                 'csrf_token': ''
             }),
             headers = self.headers

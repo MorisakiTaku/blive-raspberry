@@ -12,8 +12,8 @@ class DownloadService(Service):
         self.log = Log('Download Service')
         self.musicDownloader = NeteaseMusic()
 
-    # 获取下载队列 分发至下载函数
     def run(self):
+        """获取下载队列 分发至下载函数"""
         try:
             # 判断队列是否为空
             if DownloadQueue.empty():

@@ -1,5 +1,4 @@
 import threading, time
-import ctypes
 
 class Service(object):
     """基础服务"""
